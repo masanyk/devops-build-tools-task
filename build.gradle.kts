@@ -35,3 +35,30 @@ tasks.withType<KotlinCompile> {
 
 
 // TODO: your code starts here
+import org.springframework.boot.gradle.tasks.run.BootRun
+import org.apache.tools.ant.taskdefs.condition.Os
+
+val npmCommand = if (Os.isFamily(Os.FAMILY_WINDOWS)) "npm.cmd" else "npm"
+
+tasks.register<Exec>("npmInstall") {
+    workingDir = file("ui")
+    commandLine(npmCommand, "i")
+}
+
+tasks.register<Exec>("compileUi") {
+    dependsOn("npmInstall")
+    workingDir = file("ui")
+    commandLine(npmCommand, "run", "build")
+}
+
+tasks.register<Copy>("copyUi") {
+    dependsOn("compileUi")
+    from("ui/dist") {
+        include("index.html", "app.js", "css/**")
+    }
+    into("src/main/resources")
+}
+
+tasks.withType<BootRun> {
+    dependsOn("copyUi")
+}
